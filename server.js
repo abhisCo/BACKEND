@@ -7,6 +7,21 @@ const generateResponse = require("./src/service/ai.service");
 const httpServer = createServer(app); 
 const io = new Server(httpServer, {/* options */});
 
+const chatHistory = [
+    // {
+    //     role: "user",
+    //     parts: [ { text: 'what is current PM of india?'}]
+    // },
+    // {
+    //     role: "model",
+    //     parts: [
+    //         {
+    //             text: "The current Prime Minister of India is **Narendra Modi**. He assumed office for a third consecutive term on June 9, 2024."
+    //         },
+    //     ],
+    // }
+]
+
 io.on("connection", (socket)=> {
     console.log("A user connected")
 
@@ -20,12 +35,25 @@ io.on("connection", (socket)=> {
 
     socket.on("ai-message", async (data) =>{
 
-        console.log("Received AI message:", data.prompt);
-        const response = await generateResponse(data.prompt);
-        console.log("AI Response:", response);
+        console.log("Received AI message:", data);
+
+        chatHistory.push({
+            role: "user",
+            parts: [{ text: data }]
+        });
+
+        const response = await generateResponse(chatHistory);
+        // console.log("AI Response:", response);
+
+        chatHistory.push({
+            role: "model",
+            parts: [ { text: response } ]
+        });
+
         socket.emit("ai-message-response", { response })
     })
-    
+     
+
 });
 
 httpServer.listen(3000, () => {
